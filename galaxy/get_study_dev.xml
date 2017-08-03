@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<tool id="get_study_dev" name="get_study_dev" version="1.0">
+  <description>Get an ISA-Tab ZIP archive from MetaboLights</description>
+  <command interpreter="python3">../run_mtblisa.py --command GET --study $mtbls_id --primary-output-file ${output} --outpath ${output.extra_files_path}</command>
+  <inputs>
+    <param name="mtbls_id" type="text" label="Metabolights Study Identifier"/>
+  </inputs>
+  <outputs>
+    <data format="isa-tab" name="output" label="ISA-Tab ZIP archive" />
+  </outputs>
+
+  <help>
+      This tool gets an ISA-Tab ZIP archive from Metabolights.
+  </help>
+
+</tool>
