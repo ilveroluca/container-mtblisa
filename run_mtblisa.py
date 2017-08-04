@@ -4,8 +4,6 @@ import sys
 import shutil
 import argparse
 import os
-import re
-import fnmatch
 
 help_text = """
 ISA slicer - a wrapper for isatools.io.mtbls
@@ -62,26 +60,13 @@ parser.add_argument("--command", help="Command, one of GET GETJ GET_FACTORS GET_
 parser.add_argument("--study", help="MetaboLights study ID, e.g. MTBLS1")
 parser.add_argument("--query", help="Query on study")
 parser.add_argument("--outpath", help="Output path")
-parser.add_argument("--primary-output-file", help="Primary output path")
+parser.add_argument("--out-format", choices=('zip'), help="Output format", default=None)
 args = parser.parse_args()
 
 cmd = args.command if args.command else os.getcwd()
 study_id = args.study if args.study else ""
 query = args.query if args.query else "/query.json"
 outpath = args.outpath if args.outpath else os.getcwd()
-
-
-def get_primary_filename(files_list):
-    """ Use the `investigation` file as primary file"""
-    investigation_file_pattern = re.compile(fnmatch.translate("i_*.txt"))
-    res = [l for l in files_list if investigation_file_pattern.match(l)]
-    if len(res) > 0:
-        if len(res) == 1:
-            return res[0]
-        print("More than one file match the pattern '%s' "
-              "to identify the investigation file" % investigation_file_pattern)
-    return None
-
 
 try:
     from isatools.io import mtbls as MTBLS
@@ -91,10 +76,10 @@ if cmd == 'GET':
     tmpdir = MTBLS.get(study_id)
     if tmpdir is not None:
         print(os.listdir(tmpdir))
-        if args.primary_output_file:
-            shutil.copy(os.path.join(tmpdir, get_primary_filename(os.listdir(tmpdir))), args.primary_output_file)
-            shutil.move(tmpdir, args.outpath)  # 'outpath' is used as the 'extra_files_path' of the ISA composite dataset
-            print("Written composite output dataset")
+        if args.out_format is None:
+            # 'outpath' is used as the 'extra_files_path' of the ISA composite dataset
+            shutil.move(tmpdir, args.outpath)
+            print("Written dataset")
         else:
             os.chdir(outpath)
             shutil.make_archive('out', 'zip', tmpdir)
