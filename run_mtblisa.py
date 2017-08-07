@@ -4,6 +4,12 @@ import sys
 import shutil
 import argparse
 import os
+import json
+
+try:
+    from isatools.io import mtbls as MTBLS
+except ImportError as e:
+    raise RuntimeError("Could not import isatools.io.mtbls package")
 
 help_text = """
 ISA slicer - a wrapper for isatools.io.mtbls
@@ -68,10 +74,6 @@ study_id = args.study if args.study else ""
 query = args.query if args.query else "/query.json"
 outpath = args.outpath if args.outpath else os.getcwd()
 
-try:
-    from isatools.io import mtbls as MTBLS
-except ImportError as e:
-    raise RuntimeError("Could not import isatools.io.mtbls package")
 if cmd == 'GET':
     tmpdir = MTBLS.get(study_id)
     if tmpdir is not None:
@@ -90,7 +92,6 @@ if cmd == 'GET':
 elif cmd == 'GETJ':
     isajson = MTBLS.getj(study_id)
     if isajson is not None:
-        import json
         with open("out.json", 'w') as outfile:
             json.dump(isajson, outfile, indent=4)
         print("ISA-JSON written to out.json")
@@ -99,7 +100,6 @@ elif cmd == 'GETJ':
 elif cmd == 'GET_FACTORS':
     factor_names = MTBLS.get_factor_names(study_id)
     if factor_names is not None:
-        import json
         with open("out.json", 'w') as outfile:
             json.dump(list(factor_names), outfile, indent=4)
         print("Factor names written to out.json")
@@ -108,7 +108,6 @@ elif cmd == 'GET_FACTORS':
 elif cmd == 'GET_FVS':
     fvs = MTBLS.get_factor_values(study_id, query)
     if fvs is not None:
-        import json
         with open("out.json", 'w') as outfile:
             json.dump(list(fvs), outfile, indent=4)
         print("Factor values written to out.json")
@@ -116,14 +115,12 @@ elif cmd == 'GET_FVS':
         print("There was an i/o problem with the ISA-Tab.")
 elif cmd == 'GET_DATA_FILES':
     if query is not None:
-        import json
         with open(query, encoding='utf-8') as query_fp:
             json_query = json.load(query_fp)
             print("running with query: {}".format(json_query))
             data_files = MTBLS.get_data_files(study_id, json_query)
             print("Result data files list: {}".format(data_files))
             if data_files is not None:
-                import json
                 with open("out.json", 'w') as outfile:
                     print("dumping data_files")
                     json.dump(list(data_files), outfile, indent=4)
@@ -133,7 +130,6 @@ elif cmd == 'GET_DATA_FILES':
     else:
         data_files = MTBLS.get_data_files(study_id)
         if data_files is not None:
-            import json
             with open("out.json", 'w') as outfile:
                 json.dump(data_files, outfile, indent=4)
             print("Data files written to out.json")
@@ -142,7 +138,6 @@ elif cmd == 'GET_DATA_FILES':
 elif cmd == 'GET_SUMMARY':
     summary = MTBLS.get_study_variable_summary(study_id)
     if summary is not None:
-        import json
         with open("out.json", 'w') as outfile:
             json.dump(summary, outfile, indent=4)
 else:
