@@ -1,150 +1,157 @@
 #!/usr/bin/env python3
 
-import sys
-import shutil
-import argparse
 import os
+import sys
 import json
-
-try:
-    from isatools.io import mtbls as MTBLS
-except ImportError as e:
-    raise RuntimeError("Could not import isatools.io.mtbls package")
-
-help_text = """
-ISA slicer - a wrapper for isatools.io.mtbls
-
-Basic usage:
-    run_mtblisa.py --command <command> --study <study_id> [--query <query>] [--outpath path]
-
-To get ISA-Tab from MetaboLights:
-
-    run_mtblisa.py --command GET --study <study_id>
-eg. run_mtblisa.py --command GET --study MTBLS1
-    # writes ISArchive to out.zip
-
-To get ISA-JSON from MetaboLights:
-
-    run_mtblisa.py --command GETJ --study <study_id>
-eg. run_mtblisa.py --command GETJ --study MTBLS1
-    # writes ISA JSON file to out.json
-
-To get factor names from a study:
-
-    run_mtblisa.py --command GET_FACTORS --study <study_id>
-eg. run_mtblisa.py --command GET_FACTORS --study MTBLS1
-    # writes result to out.json
-
-To get factor values from a study:
-
-    run_mtblisa.py --command GET_FVS --study <study_id> --query <factor_name>
-eg. run_mtblisa.py --command GET_FVS --study MTBLS1 --query "Gender"
-    # writes result to out.json
-
-To get data file references from a study (take care to ensure escaping of double quotes):
-
-    run_mtblisa.py --command GET_DATA_FILES --study <study_id> --query <factor_selection>
-eg. run_mtblisa.py --command GET_DATA_FILES --study MTBLS1 --query /query.json '{"Gender":"Male"}'
-    # writes result to out.json
-
-To get variables summary from a study:
-
-    run_mtblisa.py --command GET_SUMMARY --study <study_id>
-eg. run_mtblisa.py --command GET_SUMMARY --study MTBLS1
-    # writes result to out.json
-
-
-"""
+import shutil
+import logging
+import tempfile
+from importlib import import_module
+from parser_utils import maincommand, subcommand, arg
 
 # FIXME: remove this temporary fix.
 #        This is just to avoid some prints to the stderr stream
 #        which cause that the Galaxy job is recognised as failed.
-sys.stderr = sys.stdout
+# sys.stderr = sys.stdout
+
+# isatools.io.mtbls module
+_mtbls = None
+
+# configure logger
+logger = logging.getLogger()
 
 
-def main(args):
-    parser = argparse.ArgumentParser(usage=help_text)
-    parser.add_argument("--command", help="Command, one of GET GETJ GET_FACTORS GET_FVS GET_DATA_FILES")
-    parser.add_argument("--study", help="MetaboLights study ID, e.g. MTBLS1")
-    parser.add_argument("--query", help="Query on study")
-    parser.add_argument("--outpath", help="Output path")
-    parser.add_argument("--out-format", choices=('zip'), help="Output format", default=None)
-    args = parser.parse_args(args)
+def init_mtbls():
+    global _mtbls
+    try:
+        if _mtbls is None:
+            _mtbls = import_module("isatools.io.mtbls")
+        return _mtbls
+    except ImportError as e:
+        raise RuntimeError("Could not import isatools.io.mtbls package")
 
-    cmd = args.command if args.command else os.getcwd()
-    study_id = args.study if args.study else ""
-    query = args.query if args.query else "/query.json"
-    outpath = args.outpath if args.outpath else os.getcwd()
 
-    if cmd == 'GET':
-        tmpdir = MTBLS.get(study_id)
-        if tmpdir is not None:
-            print(os.listdir(tmpdir))
-            if args.out_format is None:
-                # 'outpath' is used as the 'extra_files_path' of the ISA composite dataset
-                shutil.move(tmpdir, args.outpath)
-                print("Written dataset")
-            else:
-                os.chdir(outpath)
-                shutil.make_archive('out', 'zip', tmpdir)
-                shutil.rmtree(tmpdir)
-                print("ISA-Tab written to out.zip")
+def _write_json(json_data, filename="data.json", output_path=None):
+    if json_data is not None:
+        if output_path is None:
+            output_path = tempfile.mkdtemp()
+        with open(os.path.join(output_path, filename), 'w') as outfile:
+            json.dump(json_data, outfile, indent=4)
+            logger.info("ISA-JSON written to: %s" % os.path.join(output_path, filename))
+    return output_path
+
+
+def _write_output(source_path, target_path, output_basename, enable_compression):
+    if source_path is not None:
+        logger.debug(os.listdir(source_path))
+
+        if enable_compression:
+            os.chdir(target_path)
+            shutil.make_archive(output_basename, enable_compression, source_path)
+            shutil.rmtree(source_path)
+            logger.info("ISA-Tab written to %s.%s", output_basename, enable_compression)
+
         else:
-            print("There was an i/o problem with the ISA-Tab.")
-    elif cmd == 'GETJ':
-        isajson = MTBLS.getj(study_id)
-        if isajson is not None:
-            with open("out.json", 'w') as outfile:
-                json.dump(isajson, outfile, indent=4)
-            print("ISA-JSON written to out.json")
-        else:
-            print("There was an i/o problem with the ISA-Tab.")
-    elif cmd == 'GET_FACTORS':
-        factor_names = MTBLS.get_factor_names(study_id)
-        if factor_names is not None:
-            with open("out.json", 'w') as outfile:
-                json.dump(list(factor_names), outfile, indent=4)
-            print("Factor names written to out.json")
-        else:
-            print("There was an i/o problem with the ISA-Tab.")
-    elif cmd == 'GET_FVS':
-        fvs = MTBLS.get_factor_values(study_id, query)
-        if fvs is not None:
-            with open("out.json", 'w') as outfile:
-                json.dump(list(fvs), outfile, indent=4)
-            print("Factor values written to out.json")
-        else:
-            print("There was an i/o problem with the ISA-Tab.")
-    elif cmd == 'GET_DATA_FILES':
-        if query is not None:
-            with open(query, encoding='utf-8') as query_fp:
-                json_query = json.load(query_fp)
-                print("running with query: {}".format(json_query))
-                data_files = MTBLS.get_data_files(study_id, json_query)
-                print("Result data files list: {}".format(data_files))
-                if data_files is not None:
-                    with open("out.json", 'w') as outfile:
-                        print("dumping data_files")
-                        json.dump(list(data_files), outfile, indent=4)
-                    print("Data files written to out.json")
-                else:
-                    print("There was an i/o problem with the ISA-Tab.")
-        else:
-            data_files = MTBLS.get_data_files(study_id)
-            if data_files is not None:
-                with open("out.json", 'w') as outfile:
-                    json.dump(data_files, outfile, indent=4)
-                print("Data files written to out.json")
-            else:
-                print("There was an i/o problem with the ISA-Tab.")
-    elif cmd == 'GET_SUMMARY':
-        summary = MTBLS.get_study_variable_summary(study_id)
-        if summary is not None:
-            with open("out.json", 'w') as outfile:
-                json.dump(summary, outfile, indent=4)
+            # 'outpath' is used as the 'extra_files_path' of the ISA composite dataset
+            destination = os.path.join(target_path, output_basename)
+            if os.path.exists(destination):
+                shutil.rmtree(destination)
+            shutil.move(source_path, destination)
+            logger.info("Dataset written to %s", destination)
     else:
-        print(help_text)
+        logger.warn("Source path '%s' is empty!!!", source_path)
+
+
+def post(result, output_path, output_basename, enable_compression):
+    if result:
+        _write_output(result, output_path, output_basename, enable_compression)
+
+
+@maincommand(post=post, args=[
+    arg("--verbosity", help="Verbosity level (default: ERROR)",
+        default=logging.ERROR, choices=["INFO", "ERROR", "DEBUG", "WARN", "NOTSET"]),
+    arg("-o", "--output-path", help="Output path", default="."),
+    arg("--output-basename", help="Output basename (e.g., study)", default=None),
+    arg("--enable-compression", choices=('zip', 'tar.gz'), help="Output format", default=None)])
+def main_command(output_basename, enable_compression, opts):
+    """
+    ISA slicer - a wrapper for isatools.io.mtbls
+    """
+    # configure logger
+    logging.basicConfig(level=opts.verbosity)
+    # we need to load the mtbls module here to be able to properly initialize the logger
+    init_mtbls()
+    # initialize the output basename if not defined by CLI
+    if opts.output_basename is None:
+        if "study" in opts:
+            opts.output_basename = opts.study
+        else:
+            opts.output_basename = "study"
+
+
+@subcommand(args=[
+    arg("study", help="MetaboLights study ID, e.g. MTBLS1"),
+    arg("-f", "--isa-format", choices=("isa-tab", "isa-json"),
+        help="ISA dataset format, i.e., ISA-Tab or ISA-Json", default="isa-tab"),
+])
+def get_study(study, isa_format, output_path):
+    """ Get a study as ISA format (either isa-tab or isa-json). """
+
+    if isa_format == 'isa-tab':
+        source_path = _mtbls.get(study)
+    elif isa_format == 'isa-json':
+        source_path = _write_json(_mtbls.getj(study))
+    else:
+        raise RuntimeError("Invalid format %s" % isa_format)
+
+    return source_path
+
+
+@subcommand(args=[
+    arg("study", help="MetaboLights study ID, e.g. MTBLS1")
+])
+def get_factors(study):
+    """ Get factor names from a study. """
+    factor_names = _mtbls.get_factor_names(study)
+    return _write_json(list(factor_names))
+
+
+@subcommand(args=[
+    arg("study", help="MetaboLights study ID, e.g. MTBLS1"),
+    arg("-q", "--query", help="A query like '--query \"Gender\"'")
+])
+def get_factor_values(study, query):
+    """ Get factor values """
+    factor_values = _mtbls.get_factor_values(study, query)
+    return _write_json(list(factor_values))
+
+
+@subcommand(args=[
+    arg("study", help="MetaboLights study ID, e.g. MTBLS1")
+])
+def get_summary(study):
+    """ Get variables summary from a study. """
+    MTBLS = _mtbls
+    summary = MTBLS.get_study_variable_summary(study)
+    return _write_json(summary)
+
+
+@subcommand(args=[
+    arg("study", help="MetaboLights study ID, e.g. MTBLS1"),
+    arg("-q", "--query", help="A query like '--query \"Gender\"'"),
+    arg("-j", "--json-query", help="The path of the json containing the query")
+])
+def get_data_files(study, query, json_query):
+    """ Get data file references from a study (take care to ensure escaping of double quotes) """
+    if query is None and json_query is not None:
+        with open(query, encoding='utf-8') as query_fp:
+            query = json.load(query_fp)
+            logger.debug("running with query: {}".format(query))
+    data_files = _mtbls.get_data_files(study, query)
+    logger.debug("Result data files list: {}".format(data_files))
+
+    return _write_json(data_files)
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main_command(sys.argv[1:])
