@@ -48,6 +48,7 @@ def maincommand(description=None, usage=None, args=None, exec_sub_command=True, 
             if args is None:
                 args = sys.argv[1:]
             options = main_parser.parse_args(args)
+            func.__globals__["__options__"] = options
 
             if pre:
                 pre(**_get_cmd_options(options, pre))
@@ -77,9 +78,30 @@ def subcommand(args=[], pre=None, post=None):
         parser = __SUB_PARSERS__.add_parser(func.__name__, description=func.__doc__, formatter_class=_CustomFormatter)
         for arg in args:
             parser.add_argument(*arg[0], **arg[1])
-        parser.set_defaults(sub_command=func)
-        __SUB_COMMANDS__[func.__name__] = func
-        return func
+
+        def inner_exec(args=None):
+            if not "__options__" in func.__globals__:
+                if args is None:
+                    args = sys.argv[1:]
+                main_parser = func.__globals__.get("__MAIN_PARSER__", None)
+                options = main_parser.parse_args(args)
+            else:
+                options = func.__globals__["__options__"]
+
+            if pre:
+                pre(**_get_cmd_options(options, pre))
+            cmd_opts = _get_cmd_options(options, func)
+            result = func(**cmd_opts)
+            if post:
+                post_args = _get_cmd_options(options, post)
+                post_args["result"] = result
+                post(**post_args)
+
+            return result
+
+        parser.set_defaults(sub_command=inner_exec)
+        __SUB_COMMANDS__[func.__name__] = inner_exec
+        return inner_exec
 
     return decorator
 
