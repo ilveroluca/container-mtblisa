@@ -149,13 +149,14 @@ def get_summary(study):
     arg("-q", "--query", help="A query like '--query \"Gender\"'"),
     arg("-j", "--json-query", help="The path of the json containing the query")
 ])
-def get_data_files(study, query, json_query):
+def get_data_files(study, query=None, json_query=None):
     """ Get data file references from a study (take care to ensure escaping of double quotes) """
     if query is None and json_query is not None:
         with open(query, encoding='utf-8') as query_fp:
             query = json.load(query_fp)
             logger.debug("running with query: {}".format(query))
-    data_files = _mtbls.get_data_files(study, query)
+    elif query is not None and json_query is not None:
+        logger.warn("JSON query ignored")
     data_files = get_mtbls().get_data_files(study, query)
     logger.debug("Result data files list: {}".format(data_files))
 
