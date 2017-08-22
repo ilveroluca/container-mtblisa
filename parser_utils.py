@@ -21,6 +21,16 @@ def _get_cmd_options(opts, func):
     return res
 
 
+def _get_subparsers(func):
+    main_parser = func.__globals__["__MAIN_PARSER__"]
+    if main_parser is None:
+        raise RuntimeError("'maincommand' not defined! NOTICE: 'maincommand' must be defined before subcommands.")
+    if "__SUB_PARSERS__" not in func.__globals__:
+        sub_parsers = main_parser.add_subparsers(dest="command")
+        func.__globals__["__SUB_PARSERS__"] = sub_parsers
+    return func.__globals__["__SUB_PARSERS__"]
+
+
 def maincommand(description=None, usage=None, args=None, exec_sub_command=True, pre=None, post=None):
     def decorator(func):
         global __MAIN_COMMAND__
@@ -30,9 +40,7 @@ def maincommand(description=None, usage=None, args=None, exec_sub_command=True, 
                                                   description=description or func.__doc__, usage=usage)
             for arg in args:
                 main_parser.add_argument(*arg[0], **arg[1])
-            sub_parsers = main_parser.add_subparsers(dest="command")
             func.__globals__["__MAIN_PARSER__"] = main_parser
-            func.__globals__["__SUB_PARSERS__"] = sub_parsers
 
         def _inner_main(args):
             main_parser = func.__globals__.get("__MAIN_PARSER__", None)
@@ -48,7 +56,6 @@ def maincommand(description=None, usage=None, args=None, exec_sub_command=True, 
                 result = options.sub_command(**sub_cmd_opts)
             if post:
                 post_args = _get_cmd_options(options, post)
-                print("Post options %s " % post_args)
                 post_args["result"] = result
                 post(**post_args)
 
@@ -62,10 +69,8 @@ def maincommand(description=None, usage=None, args=None, exec_sub_command=True, 
 
 def subcommand(args=[], pre=None, post=None):
     def decorator(func):
-        __SUB_PARSERS__ = func.__globals__["__SUB_PARSERS__"]
-        if __SUB_PARSERS__ is None:
-            raise RuntimeError("'maincommand' not defined!")
         global __SUB_COMMANDS__
+        __SUB_PARSERS__ = _get_subparsers(func)
         parser = __SUB_PARSERS__.add_parser(func.__name__, description=func.__doc__, formatter_class=_CustomFormatter)
         for arg in args:
             parser.add_argument(*arg[0], **arg[1])
