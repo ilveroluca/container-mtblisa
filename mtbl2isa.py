@@ -65,7 +65,7 @@ def _write_output(source_path, target_path, output_filename, enable_compression)
                 shutil.make_archive(tmp_file, enable_compression, source_path)
                 if output_filename:
                     shutil.move(".".join([tmp_file, enable_compression]), output_filename)
-                logger.info("ISA-Tab written to %s.%s", tmp_file, enable_compression)
+                logger.info("ISA-Tab written to %s/%s", target_path, output_filename)
             else:
                 # move all files from the temp folder to the destination folder
                 for f in os.listdir(source_path):
