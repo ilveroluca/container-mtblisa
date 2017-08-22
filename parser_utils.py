@@ -1,3 +1,4 @@
+import sys
 import copy
 import inspect
 import argparse
@@ -42,8 +43,10 @@ def maincommand(description=None, usage=None, args=None, exec_sub_command=True, 
                 main_parser.add_argument(*arg[0], **arg[1])
             func.__globals__["__MAIN_PARSER__"] = main_parser
 
-        def _inner_main(args):
+        def _inner_main(args=None):
             main_parser = func.__globals__.get("__MAIN_PARSER__", None)
+            if args is None:
+                args = sys.argv[1:]
             options = main_parser.parse_args(args)
 
             if pre:
