@@ -27,6 +27,9 @@ VALID_FORMATS = ("isa-tab", "isa-json")
 class NotValidIsaFormat(Exception):
     pass
 
+
+def get_mtbls():
+    # we need to load the mtbls module here to be able to properly initialize the logger
     global _mtbls
     try:
         if _mtbls is None:
@@ -103,12 +106,11 @@ def get_study(study, isa_format=VALID_FORMATS[0]):
 
     if isa_format not in VALID_FORMATS:
         raise NotValidIsaFormat("Invalid format %s" % isa_format)
+
     if isa_format == 'isa-tab':
-        source_path = _mtbls.get(study)
+        source_path = get_mtbls().get(study)
     elif isa_format == 'isa-json':
-        source_path = _write_json(_mtbls.getj(study))
-    else:
-        raise RuntimeError("Invalid format %s" % isa_format)
+        source_path = _write_json(get_mtbls().getj(study))
 
     return source_path
 
@@ -118,7 +120,7 @@ def get_study(study, isa_format=VALID_FORMATS[0]):
 ])
 def get_factors(study):
     """ Get factor names from a study. """
-    factor_names = _mtbls.get_factor_names(study)
+    factor_names = get_mtbls().get_factor_names(study)
     return _write_json(list(factor_names))
 
 
@@ -128,7 +130,7 @@ def get_factors(study):
 ])
 def get_factor_values(study, query):
     """ Get factor values """
-    factor_values = _mtbls.get_factor_values(study, query)
+    factor_values = get_mtbls().get_factor_values(study, query)
     return _write_json(list(factor_values))
 
 
@@ -154,6 +156,7 @@ def get_data_files(study, query, json_query):
             query = json.load(query_fp)
             logger.debug("running with query: {}".format(query))
     data_files = _mtbls.get_data_files(study, query)
+    data_files = get_mtbls().get_data_files(study, query)
     logger.debug("Result data files list: {}".format(data_files))
 
     return _write_json(data_files)
