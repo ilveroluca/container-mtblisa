@@ -2,14 +2,15 @@
 <tool id="get_study" name="get_study" version="1.0">
   <description>Get an ISA-Tab ZIP archive from MetaboLights</description>
   <command><![CDATA[
-    run_mtblisa.py --command GET --study $mtbls_id
-  ]]>
+        $__tool_directory__/../mtbl2isa.py --output-file ${output} get_study $mtbls_id &&
+        bash -c "cp ${output.extra_files_path}/i_*.txt ${output}"
+    ]]>
   </command>
   <inputs>
     <param name="mtbls_id" type="text" label="Metabolights Study Identifier"/>
   </inputs>
   <outputs>
-    <data format="zip" name="output" from_work_dir="out.zip" label="ISA-Tab ZIP archive" />
+    <data format="zip" name="output" label="ISA-Tab ZIP archive" />
   </outputs>
 
   <help>
