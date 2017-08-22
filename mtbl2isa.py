@@ -157,5 +157,8 @@ if __name__ == "__main__":
     try:
         main_command(sys.argv[1:])
     except Exception as e:
-        logger.error(e)
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(e)
+        else:
+            logger.error(e.message)
         sys.exit(e.code if hasattr(e, "code") else 99)
