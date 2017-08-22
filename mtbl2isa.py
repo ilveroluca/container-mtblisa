@@ -154,4 +154,8 @@ def get_data_files(study, query, json_query):
 
 
 if __name__ == "__main__":
-    main_command(sys.argv[1:])
+    try:
+        main_command(sys.argv[1:])
+    except Exception as e:
+        logger.error(e)
+        sys.exit(e.code if hasattr(e, "code") else 99)

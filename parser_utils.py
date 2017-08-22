@@ -1,5 +1,9 @@
+import copy
 import inspect
 import argparse
+
+__MAIN_COMMAND__ = {}
+__SUB_COMMANDS__ = {}
 
 
 class _CustomFormatter(argparse.RawTextHelpFormatter):
@@ -19,6 +23,7 @@ def _get_cmd_options(opts, func):
 
 def maincommand(description=None, usage=None, args=None, exec_sub_command=True, pre=None, post=None):
     def decorator(func):
+        global __MAIN_COMMAND__
         main_parser = func.__globals__.get("__MAIN_PARSER__", None)
         if main_parser is None:
             main_parser = argparse.ArgumentParser(formatter_class=_CustomFormatter,
@@ -49,6 +54,7 @@ def maincommand(description=None, usage=None, args=None, exec_sub_command=True, 
 
             return result
 
+        __MAIN_COMMAND__[func.__name__] = func
         return _inner_main
 
     return decorator
@@ -59,12 +65,25 @@ def subcommand(args=[], pre=None, post=None):
         __SUB_PARSERS__ = func.__globals__["__SUB_PARSERS__"]
         if __SUB_PARSERS__ is None:
             raise RuntimeError("'maincommand' not defined!")
+        global __SUB_COMMANDS__
         parser = __SUB_PARSERS__.add_parser(func.__name__, description=func.__doc__, formatter_class=_CustomFormatter)
         for arg in args:
             parser.add_argument(*arg[0], **arg[1])
         parser.set_defaults(sub_command=func)
+        __SUB_COMMANDS__[func.__name__] = func
+        return func
 
     return decorator
+
+
+def get_maincommand():
+    global __MAIN_COMMAND__
+    return copy.copy(__MAIN_COMMAND__)
+
+
+def get_subcommands():
+    global __SUB_COMMANDS__
+    return copy.copy(__SUB_COMMANDS__)
 
 
 def arg(*name_or_flags, **kwargs):
