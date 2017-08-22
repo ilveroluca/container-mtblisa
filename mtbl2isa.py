@@ -61,7 +61,7 @@ def _write_output(source_path, target_path, output_basename, enable_compression)
 
         else:
             # 'outpath' is used as the 'extra_files_path' of the ISA composite dataset
-            destination = os.path.join(target_path, output_basename)
+            destination = os.path.join(target_path, output_basename) if target_path == "." else target_path
             if os.path.exists(destination):
                 shutil.rmtree(destination)
             shutil.move(source_path, destination)
