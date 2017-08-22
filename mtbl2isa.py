@@ -20,8 +20,13 @@ _mtbls = None
 # configure logger
 logger = logging.getLogger()
 
+""" list of valid formats """
+VALID_FORMATS = ("isa-tab", "isa-json")
 
-def init_mtbls():
+
+class NotValidIsaFormat(Exception):
+    pass
+
     global _mtbls
     try:
         if _mtbls is None:
@@ -79,8 +84,7 @@ def main_command(output_basename, enable_compression, opts):
     """
     # configure logger
     logging.basicConfig(level=opts.verbosity)
-    # we need to load the mtbls module here to be able to properly initialize the logger
-    init_mtbls()
+
     # initialize the output basename if not defined by CLI
     if opts.output_basename is None:
         if "study" in opts:
@@ -91,12 +95,14 @@ def main_command(output_basename, enable_compression, opts):
 
 @subcommand(args=[
     arg("study", help="MetaboLights study ID, e.g. MTBLS1"),
-    arg("-f", "--isa-format", choices=("isa-tab", "isa-json"),
-        help="ISA dataset format, i.e., ISA-Tab or ISA-Json", default="isa-tab"),
+    arg("-f", "--isa-format", choices=VALID_FORMATS, default=VALID_FORMATS[0],
+        help="ISA dataset format, i.e., ISA-Tab or ISA-Json (default = {})".format(VALID_FORMATS[0])),
 ])
-def get_study(study, isa_format, output_path):
+def get_study(study, isa_format=VALID_FORMATS[0]):
     """ Get a study as ISA format (either isa-tab or isa-json). """
 
+    if isa_format not in VALID_FORMATS:
+        raise NotValidIsaFormat("Invalid format %s" % isa_format)
     if isa_format == 'isa-tab':
         source_path = _mtbls.get(study)
     elif isa_format == 'isa-json':
