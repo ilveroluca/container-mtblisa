@@ -12,7 +12,7 @@ from parser_utils import maincommand, subcommand, arg
 # FIXME: remove this temporary fix.
 #        This is just to avoid some prints to the stderr stream
 #        which cause that the Galaxy job is recognised as failed.
-# sys.stderr = sys.stdout
+sys.stderr = sys.stdout
 
 # isatools.io.mtbls module
 _mtbls = None
