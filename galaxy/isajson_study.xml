@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<tool id="isajson_study" name="isajson_study" version="1.0">
+    <description>Get an ISA-JSON dataset containing a MetaboLights study</description>
+    <command><![CDATA[
+        $__tool_directory__/../mtbl2isa.py -o ${output.extra_files_path} get_study -f isa-json $mtbls_id &&
+        bash -c "cp ${output.extra_files_path}/*.json ${output}"
+    ]]></command>
+    <inputs>
+        <param name="mtbls_id" type="text" label="Metabolights Study Identifier"/>
+    </inputs>
+    <outputs>
+        <data format="isa-json" name="output" label="isa-json dataset"/>
+    </outputs>
+
+    <help>
+        This tool gets an ISA-Tab ZIP archive from Metabolights.
+    </help>
+</tool>

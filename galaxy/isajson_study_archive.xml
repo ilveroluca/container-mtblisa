@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<tool id="isajson_study_archive" name="isajson_study_archive" version="1.0">
+    <description>Get an ISA-JSON ZIP archive from MetaboLights</description>
+    <command><![CDATA[
+        $__tool_directory__/../mtbl2isa.py --enable-compression zip --output-file ${output} get_study -f isa-json $mtbls_id
+    ]]></command>
+    <inputs>
+        <param name="mtbls_id" type="text" label="Metabolights Study Identifier"/>
+    </inputs>
+    <outputs>
+        <data format="zip" name="output" label="ISA-JSON ZIP archive"/>
+    </outputs>
+
+    <help>
+        This tool gets an ISA-Tab ZIP archive from Metabolights.
+    </help>
+
+</tool>

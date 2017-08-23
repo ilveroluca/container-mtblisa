@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<tool id="get_study_dev" name="get_study_dev" version="1.0">
-    <description>Get an ISA-Tab ZIP archive from MetaboLights</description>
+<tool id="isatab_study" name="isatab_study" version="1.0">
+    <description>Get an ISA-Tab dataset containing a MetaboLights study</description>
     <command><![CDATA[
         $__tool_directory__/../mtbl2isa.py -o ${output.extra_files_path} get_study $mtbls_id &&
         bash -c "cp ${output.extra_files_path}/i_*.txt ${output}"
@@ -9,7 +9,7 @@
         <param name="mtbls_id" type="text" label="Metabolights Study Identifier"/>
     </inputs>
     <outputs>
-        <data format="isa-tab" name="output" label="ISA-Tab ZIP archive"/>
+        <data format="isa-tab" name="output" label="isa-tab dataset"/>
     </outputs>
 
     <help>
