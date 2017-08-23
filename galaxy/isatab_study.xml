@@ -2,7 +2,7 @@
 <tool id="get_study_dev" name="get_study_dev" version="1.0">
     <description>Get an ISA-Tab ZIP archive from MetaboLights</description>
     <command><![CDATA[
-        $__tool_directory__/../run_mtblisa.py --command GET --study $mtbls_id --outpath ${output.extra_files_path} &&
+        $__tool_directory__/../mtbl2isa.py -o ${output.extra_files_path} get_study $mtbls_id &&
         bash -c "cp ${output.extra_files_path}/i_*.txt ${output}"
     ]]></command>
     <inputs>

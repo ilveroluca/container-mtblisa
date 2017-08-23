@@ -133,7 +133,7 @@ def get_study(study, isa_format=VALID_FORMATS[0]):
     if isa_format == 'isa-tab':
         source_path = get_mtbls().get(study)
     elif isa_format == 'isa-json':
-        source_path = _write_json(get_mtbls().getj(study))
+        source_path = _write_json(get_mtbls().getj(study), "{}.json".format(study))
 
     return source_path
 
