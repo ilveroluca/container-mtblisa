@@ -9,11 +9,6 @@ import tempfile
 from importlib import import_module
 from parser_utils import maincommand, subcommand, arg
 
-# FIXME: remove this temporary fix.
-#        This is just to avoid some prints to the stderr stream
-#        which cause that the Galaxy job is recognised as failed.
-sys.stderr = sys.stdout
-
 # isatools.io.mtbls module
 _mtbls = None
 
@@ -34,12 +29,14 @@ class NotValidIsaFormat(Exception):
 def get_mtbls():
     # we need to load the mtbls module here to be able to properly initialize the logger
     global _mtbls
+    #package_name = "isatools.net.mtbls" # Only for newer versions of ISA tools
+    package_name = "isatools.io.mtbls"
     try:
         if _mtbls is None:
-            _mtbls = import_module("isatools.net.mtbls")
+            _mtbls = import_module(package_name)
         return _mtbls
     except ImportError as e:
-        raise RuntimeError("Could not import isatools.io.mtbls package")
+        raise RuntimeError("Could not import {} package. {}".format(package_name, e))
 
 
 def _write_json(json_data, filename, output_path=None):
@@ -48,7 +45,7 @@ def _write_json(json_data, filename, output_path=None):
             output_path = tempfile.mkdtemp()
         with open(os.path.join(output_path, filename), 'w') as outfile:
             json.dump(json_data, outfile, indent=4)
-            logger.info("ISA-JSON written to: %s" % os.path.join(output_path, filename))
+            logger.info("ISA-JSON written to: %s", os.path.join(output_path, filename))
     return output_path
 
 
@@ -108,14 +105,14 @@ def main_command(enable_compression, opts):
     logging.basicConfig(level=opts.verbosity)
 
     # initialize output-path
-    if opts.output_path is None or not opts.output_filename is None and os.path.isabs(opts.output_filename):
-        if not opts.output_filename is None:
+    if opts.output_path is None or opts.output_filename is not None and os.path.isabs(opts.output_filename):
+        if opts.output_filename is not None:
             opts.output_path = os.path.dirname(opts.output_filename) or "."
         else:
             opts.output_path = os.path.join(".", opts.study) if "study" in opts else "."
 
     # make output_file always relative to the output_path
-    if not opts.output_filename is None and os.path.isabs(opts.output_filename):
+    if opts.output_filename is not None and os.path.isabs(opts.output_filename):
         opts.output_filename = os.path.basename(opts.output_filename)
 
 
@@ -181,11 +178,11 @@ def get_data_files(study, query=None, json_query=None, output_filename=_DEFAULT_
     if query is None and json_query is not None:
         with open(query, encoding='utf-8') as query_fp:
             query = json.load(query_fp)
-            logger.debug("running with query: {}".format(query))
+            logger.debug("running with query: %s", query)
     elif query is not None and json_query is not None:
         logger.warn("JSON query ignored")
     data_files = get_mtbls().get_data_files(study, query)
-    logger.debug("Result data files list: {}".format(data_files))
+    logger.debug("Result data files list: %s", data_files)
 
     return _write_json(data_files, output_filename)
 
@@ -194,8 +191,6 @@ if __name__ == "__main__":
     try:
         main_command(sys.argv[1:])
     except Exception as e:
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.exception(e)
-        else:
-            logger.error(e)
+        logger.exception(e)
+        logger.error(e)
         sys.exit(e.code if hasattr(e, "code") else 99)
