@@ -36,7 +36,7 @@ def get_mtbls():
     global _mtbls
     try:
         if _mtbls is None:
-            _mtbls = import_module("isatools.io.mtbls")
+            _mtbls = import_module("isatools.net.mtbls")
         return _mtbls
     except ImportError as e:
         raise RuntimeError("Could not import isatools.io.mtbls package")
