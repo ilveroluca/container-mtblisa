@@ -2,7 +2,7 @@
 <tool id="study_factors" name="study_factors" version="1.0">
   <description>Get list of study factors for a MetaboLights study</description>
   <command><![CDATA[
-    run_mtblisa.py --command GET_FACTORS --study $mtbls_id
+    mtblisa.py get_factors --study $mtbls_id
   ]]>
   </command>
   <inputs>
@@ -11,9 +11,11 @@
   <outputs>
     <data format="json" name="output" from_work_dir="out.json" label="List of study factors as JSON" />
   </outputs>
+  <stdio>
+    <exit_code range="1:" level="fatal"/>
+  </stdio>
 
   <help>
       This tool gets a list of study factors used for a given MetaboLights study.
   </help>
-
 </tool>

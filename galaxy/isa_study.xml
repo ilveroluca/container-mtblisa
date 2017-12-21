@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<tool id="isa_study" name="Get an ISA study" version="1.0">
+<tool id="luca_isa_study" name="Luca Get an ISA study" version="1.0">
     <description>Get an ISA dataset containing a MetaboLights study</description>
     <command><![CDATA[
-      $__tool_directory__/../mtbl2isa.py -o ${output.extra_files_path} get_study -f ${isa_format} $mtbls_id
+      mtblisa.py -o ${output.extra_files_path} get_study -f ${isa_format} $mtbls_id
     ]]></command>
     <inputs>
         <param name="mtbls_id" type="text" label="Metabolights Study Identifier"/>
@@ -12,8 +12,11 @@
         </param>
     </inputs>
     <outputs>
-        <data format="isa" name="output"/>
+       <data format="isa" name="output"/>
     </outputs>
+    <stdio>
+      <exit_code range="1:" level="fatal"/>
+    </stdio>
 
     <help>
       This tool gets an ISA dataset from Metabolights.  You can select
