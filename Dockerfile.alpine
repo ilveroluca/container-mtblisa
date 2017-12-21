@@ -1,0 +1,37 @@
+
+# Results in an image 267 MB in size compared to the 458 MB image based on Ubuntu
+# It takes a really long time to build though! (because it compiles numpy and pandas)
+
+FROM alpine:3.6
+
+MAINTAINER PhenoMeNal-H2020 Project ( phenomenal-h2020-users@googlegroups.com )
+
+LABEL Description="Tools to query MetaboLights ISA-Tab"
+LABEL software.version="0.8.0"
+LABEL version="0.6"
+LABEL software="mtblisa"
+
+RUN echo "Installing software" >&2 \
+    && apk add --no-cache python3 \
+    && apk add --no-cache --virtual mtblisa-build-deps ca-certificates g++ python3-dev libxml2-dev libxslt-dev \
+    && pip3 install isatools==0.8.2 argparse==1.4.0 \
+    && apk del mtblisa-build-deps \
+    && rm -rf /var/cache/apk/* \
+    && rm -rf /tmp/* /var/tmp/*
+
+WORKDIR /mtblisa
+COPY \
+  mtblisa.py \
+  parser_utils.py \
+  requirements.txt \
+  run_test.sh \
+  run_tests.py \
+  test_cmds.txt \
+  test_query.json \
+./
+
+RUN chmod a+rx run_test.sh mtblisa.py
+
+ENTRYPOINT ["./mtblisa.py"]
+
+#RUN apk add --no-cache bash
