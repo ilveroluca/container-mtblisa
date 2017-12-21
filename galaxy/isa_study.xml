@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<tool id="isa_study" name="Get an ISA study" version="1.0">
+    <description>Get an ISA dataset containing a MetaboLights study</description>
+    <command><![CDATA[
+      $__tool_directory__/../mtbl2isa.py -o ${output.extra_files_path} get_study -f ${isa_format} $mtbls_id
+    ]]></command>
+    <inputs>
+        <param name="mtbls_id" type="text" label="Metabolights Study Identifier"/>
+        <param name="isa_format" type="select" label="ISA type">
+          <option value="isa-tab" selected="true">ISA-TAB</option>
+          <option value="isa-json">ISA-JSON</option>
+        </param>
+    </inputs>
+    <outputs>
+        <data format="isa" name="output"/>
+    </outputs>
+
+    <help>
+      This tool gets an ISA dataset from Metabolights.  You can select
+      whether to generate an ISA-TAB (the default) or an ISA-JSON dataset.
+    </help>
+</tool>

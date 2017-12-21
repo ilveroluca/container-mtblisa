@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<tool id="isa_study_archive" name="Get an ISA study archive" version="1.0">
+    <description>Get an ISA ZIP archive from MetaboLights</description>
+    <command><![CDATA[
+        $__tool_directory__/../mtbl2isa.py --enable-compression zip -f ${isa_format} --output-file ${output} get_study $mtbls_id
+    ]]></command>
+    <inputs>
+        <param name="mtbls_id" type="text" label="Metabolights Study Identifier"/>
+        <param name="isa_format" type="select" label="ISA type">
+          <option value="isa-tab" selected="true">ISA-TAB</option>
+          <option value="isa-json">ISA-JSON</option>
+        </param>
+    </inputs>
+    <outputs>
+        <data format="zip" name="output" label="ISA ZIP archive"/>
+    </outputs>
+
+    <help>
+        This tool gets an ISA ZIP archive from Metabolights. You can select
+      whether the archive will contain an ISA-TAB (the default) or an ISA-JSON dataset.
+    </help>
+</tool>
